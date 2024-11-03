@@ -119,7 +119,7 @@ This is a common code snippet, without syntax highlight and line number.
 
 ### Specific Language
 
-```bash
+```python
 if [ $? -ne 0 ]; then
   echo "The command was not successful.";
   #do the needful / exit
