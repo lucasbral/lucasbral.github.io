@@ -59,7 +59,8 @@ webmaster_verifications:
 analytics:
   google:
     id: # fill in your Google Analytics ID
-  goatcounter: id:lucasbral
+  goatcounter:
+    id: lucasbral
   umami:
     id: # fill in your Umami ID
     domain: # fill in your Umami domain
