@@ -196,7 +196,7 @@ pre {
     grid-template-columns: 280px 1fr;
     gap: 3rem;
     width: 100%;
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0;
     /* Align left, don't center */
     padding: 2rem 2rem;
