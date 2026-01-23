@@ -1,0 +1,647 @@
+<!DOCTYPE html><html lang="en" data-astro-cid-sckkx6r4> <head><!-- Global Metadata --><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="/favicon.ico"><link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicons/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicons/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicons/favicon-16x16.png"><link rel="manifest" href="/assets/img/favicons/site.webmanifest"><link rel="sitemap" href="/sitemap-index.xml"><link rel="alternate" type="application/rss+xml" title="Lucas Sobral" href="https://lucasbral.github.io/rss.xml"><meta name="generator" content="Astro v5.16.14"><!-- Font preloads --><link rel="preload" href="/fonts/atkinson-regular.woff" as="font" type="font/woff" crossorigin><link rel="preload" href="/fonts/atkinson-bold.woff" as="font" type="font/woff" crossorigin><!-- Canonical URL --><link rel="canonical" href="https://lucasbral.github.io/blog/2024-11-29/2024-11-29-spotify/"><!-- Primary Meta Tags --><title>Obtaining the Most Listened Tracks on Spotify with Apache Airflow</title><meta name="title" content="Obtaining the Most Listened Tracks on Spotify with Apache Airflow"><meta name="description" content="In this tutorial, we will use Apache Airflow to orchestrate a data pipeline that retrieves the most listened-to tracks worldwide and saves them in a MongoDB cluster."><!-- Open Graph / Facebook --><meta property="og:type" content="website"><meta property="og:url" content="https://lucasbral.github.io/blog/2024-11-29/2024-11-29-spotify/"><meta property="og:title" content="Obtaining the Most Listened Tracks on Spotify with Apache Airflow"><meta property="og:description" content="In this tutorial, we will use Apache Airflow to orchestrate a data pipeline that retrieves the most listened-to tracks worldwide and saves them in a MongoDB cluster."><meta property="og:image" content="https://lucasbral.github.io/assets/posts/2024-11-29/airflow.png"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://lucasbral.github.io/blog/2024-11-29/2024-11-29-spotify/"><meta property="twitter:title" content="Obtaining the Most Listened Tracks on Spotify with Apache Airflow"><meta property="twitter:description" content="In this tutorial, we will use Apache Airflow to orchestrate a data pipeline that retrieves the most listened-to tracks worldwide and saves them in a MongoDB cluster."><meta property="twitter:image" content="https://lucasbral.github.io/assets/posts/2024-11-29/airflow.png"><!-- GoatCounter Analytics --><script async src="https://gc.zgo.at/count.js" data-goatcounter="https://lucasbral.goatcounter.com/count"></script><script>
+			// Blocking script to prevent flash of unstyled content (FOUC)
+			const theme = (() => {
+				if (
+					typeof localStorage !== "undefined" &&
+					localStorage.getItem("theme")
+				) {
+					return localStorage.getItem("theme");
+				}
+				if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+					return "dark";
+				}
+				return "light";
+			})();
+
+			if (theme === "dark") {
+				document.documentElement.classList.add("dark");
+			} else {
+				document.documentElement.classList.remove("dark");
+			}
+			// Ensure localStorage is sync'd
+			window.localStorage.setItem("theme", theme);
+		</script><link rel="stylesheet" href="/_astro/_slug_.DWIzDjJY.css">
+<link rel="stylesheet" href="/_astro/_slug_.dnqBqIgo.css">
+<style>main[data-astro-cid-sckkx6r4].full-width{max-width:100%!important;padding:0!important}
+.view-counter[data-astro-cid-e75zxctz]{color:var(--gray);font-size:.9em;display:inline-flex;align-items:center;gap:.3em}.loading[data-astro-cid-e75zxctz]{opacity:.5}.blog-page-layout{display:grid;grid-template-columns:280px 1fr 280px;gap:2rem;width:100%;max-width:1400px;margin:0 auto;padding:2rem;align-items:start}.blog-page-layout .left-sidebar{position:sticky;top:2rem;height:fit-content;border-right:1px solid var(--color-border);padding-right:1.5rem}.blog-page-layout .right-sidebar-container{position:sticky;top:2rem;height:fit-content;border-left:1px solid var(--color-border);padding-left:1.5rem}.blog-page-layout .main-content{width:100%;min-width:0}@media(max-width:1200px){.blog-page-layout{grid-template-columns:280px 1fr;max-width:1000px}.blog-page-layout .right-sidebar-container{display:none}.blog-page-layout .left-sidebar{padding-right:1.5rem}}@media(max-width:900px){.blog-page-layout{display:block;padding:1rem}.blog-page-layout .left-sidebar{position:fixed!important;top:0!important;height:100vh!important;max-height:100vh!important;z-index:1000}}.hero-image{width:100%;margin-bottom:2rem}.hero-image img{display:block;margin:0 auto;border-radius:12px;box-shadow:0 4px 6px -1px #0000001a,0 2px 4px -1px #0000000f;width:100%;height:auto;max-height:400px;object-fit:cover}.prose{width:100%;max-width:100%;margin:auto}.title{margin-bottom:2rem;text-align:center;line-height:1}.date{margin-bottom:.5em;color:var(--color-secondary);display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap}.date-separator{color:var(--gray-light)}.last-updated-on{font-style:italic}hr{border:0;border-top:1px solid var(--color-border);margin:2rem 0}
+.right-sidebar[data-astro-cid-zujyv34g]{width:100%;font-size:.9em}.sidebar-section[data-astro-cid-zujyv34g]{margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid var(--color-border)}.sidebar-section[data-astro-cid-zujyv34g] h3[data-astro-cid-zujyv34g]{margin-bottom:1rem;font-size:1rem;text-transform:uppercase;letter-spacing:1px;color:var(--gray);font-weight:600}.recent-list[data-astro-cid-zujyv34g]{list-style:none;padding:0;margin:0}.recent-list[data-astro-cid-zujyv34g] li[data-astro-cid-zujyv34g]{margin-bottom:1rem}.recent-link[data-astro-cid-zujyv34g]{display:flex;flex-direction:column;text-decoration:none;color:var(--color-text);transition:color .2s}.recent-link[data-astro-cid-zujyv34g]:hover .recent-title[data-astro-cid-zujyv34g]{color:var(--accent)}.recent-title[data-astro-cid-zujyv34g]{font-weight:500;line-height:1.3;margin-bottom:.2rem}.recent-date[data-astro-cid-zujyv34g]{font-size:.8em;color:var(--gray)}.tag-cloud[data-astro-cid-zujyv34g]{display:flex;flex-wrap:wrap;gap:.5rem}.tag-item[data-astro-cid-zujyv34g]{background:var(--gray-light);padding:.2rem .6rem;border-radius:4px;text-decoration:none;color:var(--gray-dark);font-size:.85em;transition:all .2s}.tag-item[data-astro-cid-zujyv34g]:hover{background:var(--accent);color:#fff}
+</style></head> <body data-astro-cid-sckkx6r4> <header data-astro-cid-3ef6ksr2> <nav data-astro-cid-3ef6ksr2> <button id="menu-toggle" aria-label="Toggle Menu" class="menu-toggle" data-astro-cid-3ef6ksr2> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-3ef6ksr2> <line x1="3" y1="12" x2="21" y2="12" data-astro-cid-3ef6ksr2></line> <line x1="3" y1="6" x2="21" y2="6" data-astro-cid-3ef6ksr2></line> <line x1="3" y1="18" x2="21" y2="18" data-astro-cid-3ef6ksr2></line> </svg> </button> <h2 data-astro-cid-3ef6ksr2><a href="/" data-astro-cid-3ef6ksr2>Lucas Sobral</a></h2> <div class="internal-links" data-astro-cid-3ef6ksr2> <a href="/" data-astro-cid-3ef6ksr2="true" data-astro-cid-eimmu3lg> Home </a>  <a href="/about" data-astro-cid-3ef6ksr2="true" data-astro-cid-eimmu3lg> About </a>  </div> <div class="social-links" data-astro-cid-3ef6ksr2> <a href="https://github.com/lucasbral" target="_blank" data-astro-cid-3ef6ksr2> <span class="sr-only" data-astro-cid-3ef6ksr2>GitHub</span> <svg viewBox="0 0 16 16" aria-hidden="true" width="24" height="24" fill="currentColor" data-astro-cid-3ef6ksr2> <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" data-astro-cid-3ef6ksr2></path> </svg> </a> <a href="https://www.linkedin.com/in/lucasbral" target="_blank" data-astro-cid-3ef6ksr2> <span class="sr-only" data-astro-cid-3ef6ksr2>LinkedIn</span> <svg viewBox="0 0 24 24" aria-hidden="true" width="24" height="24" fill="currentColor" data-astro-cid-3ef6ksr2> <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" data-astro-cid-3ef6ksr2></path> </svg> </a> <div class="search-container" data-astro-cid-otpdt6jm> <button id="search-btn" aria-label="Open search" data-astro-cid-otpdt6jm> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-otpdt6jm> <circle cx="11" cy="11" r="8" data-astro-cid-otpdt6jm></circle> <line x1="21" y1="21" x2="16.65" y2="16.65" data-astro-cid-otpdt6jm></line> </svg> </button> <div id="search-modal" class="hidden" data-astro-cid-otpdt6jm> <div class="modal-content" data-astro-cid-otpdt6jm> <div class="search-header" data-astro-cid-otpdt6jm> <input type="text" id="search-input" placeholder="Search posts..." autofocus data-astro-cid-otpdt6jm> <button id="close-search" aria-label="Close search" data-astro-cid-otpdt6jm> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-otpdt6jm> <line x1="18" y1="6" x2="6" y2="18" data-astro-cid-otpdt6jm></line> <line x1="6" y1="6" x2="18" y2="18" data-astro-cid-otpdt6jm></line> </svg> </button> </div> <ul id="search-results" data-astro-cid-otpdt6jm></ul> </div> </div> </div>  <script lang="ts">
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchBtn = document.getElementById("search-btn");
+        const searchModal = document.getElementById("search-modal");
+        const closeBtn = document.getElementById("close-search");
+        const searchInput = document.getElementById("search-input");
+        const searchResults = document.getElementById("search-results");
+
+        let posts = [];
+
+        // Fetch posts on hover or focus to preload
+        const fetchPosts = async () => {
+            if (posts.length > 0) return;
+            try {
+                const res = await fetch("/search.json");
+                posts = await res.json();
+            } catch (err) {
+                console.error("Error fetching search index:", err);
+            }
+        };
+
+        searchBtn?.addEventListener("mouseenter", fetchPosts);
+        searchBtn?.addEventListener("focus", fetchPosts);
+
+        const openSearch = async () => {
+            await fetchPosts();
+            searchModal?.classList.remove("hidden");
+            // Force reflow
+            searchModal?.offsetHeight;
+            searchModal?.classList.add("visible");
+            searchInput?.focus();
+            document.body.style.overflow = "hidden";
+        };
+
+        const closeSearch = () => {
+            searchModal?.classList.remove("visible");
+            setTimeout(() => {
+                searchModal?.classList.add("hidden");
+            }, 200);
+            document.body.style.overflow = "";
+            if (searchInput instanceof HTMLInputElement) searchInput.value = "";
+            if (searchResults) searchResults.innerHTML = "";
+        };
+
+        searchBtn?.addEventListener("click", openSearch);
+        closeBtn?.addEventListener("click", closeSearch);
+
+        // Close on backdrop click
+        searchModal?.addEventListener("click", (e) => {
+            if (e.target === searchModal) closeSearch();
+        });
+
+        // Close on Escape key
+        document.addEventListener("keydown", (e) => {
+            if (
+                e.key === "Escape" &&
+                searchModal?.classList.contains("visible")
+            ) {
+                closeSearch();
+            }
+        });
+
+        // Search logic
+        searchInput?.addEventListener("input", (e) => {
+            if (!(searchInput instanceof HTMLInputElement)) return;
+            const query = searchInput.value.toLowerCase();
+
+            if (!query) {
+                if (searchResults) searchResults.innerHTML = "";
+                return;
+            }
+
+            const filtered = posts.filter(
+                (post) =>
+                    post.title.toLowerCase().includes(query) ||
+                    (post.description &&
+                        post.description.toLowerCase().includes(query)),
+            );
+
+            if (searchResults) {
+                if (filtered.length === 0) {
+                    searchResults.innerHTML =
+                        '<li class="no-results">No posts found</li>';
+                } else {
+                    searchResults.innerHTML = filtered
+                        .map(
+                            (post) => `
+                        <li class="search-result-item">
+                            <a href="${post.slug}" class="search-result-link">
+                                <span class="result-title">${post.title}</span>
+                                <span class="result-desc">${post.description}</span>
+                            </a>
+                        </li>
+                    `,
+                        )
+                        .join("");
+                }
+            }
+        });
+    });
+</script> <button id="theme-toggle" aria-label="Toggle theme" data-astro-cid-x3pjskd3> <svg class="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-x3pjskd3> <circle cx="12" cy="12" r="5" data-astro-cid-x3pjskd3></circle> <line x1="12" y1="1" x2="12" y2="3" data-astro-cid-x3pjskd3></line> <line x1="12" y1="21" x2="12" y2="23" data-astro-cid-x3pjskd3></line> <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" data-astro-cid-x3pjskd3></line> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" data-astro-cid-x3pjskd3></line> <line x1="1" y1="12" x2="3" y2="12" data-astro-cid-x3pjskd3></line> <line x1="21" y1="12" x2="23" y2="12" data-astro-cid-x3pjskd3></line> <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" data-astro-cid-x3pjskd3></line> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" data-astro-cid-x3pjskd3></line> </svg> <svg class="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-astro-cid-x3pjskd3> <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" data-astro-cid-x3pjskd3></path> </svg> </button>  <script>
+	// Theme toggle handler
+	const handleToggleClick = () => {
+		const element = document.documentElement;
+		element.classList.toggle("dark");
+
+		const isDark = element.classList.contains("dark");
+		localStorage.setItem("theme", isDark ? "dark" : "light");
+	};
+
+	document
+		.getElementById("theme-toggle")
+		.addEventListener("click", handleToggleClick);
+</script> </div> </nav> </header>  <script>
+	// Robust Mobile Menu Toggle
+	document.addEventListener("DOMContentLoaded", () => {
+		const menuToggle = document.getElementById("menu-toggle");
+		const body = document.body;
+
+		if (menuToggle) {
+			menuToggle.addEventListener("click", (e) => {
+				e.stopPropagation();
+				e.preventDefault(); // Prevent any default button behavior
+				body.classList.toggle("show-sidebar");
+				console.log(
+					"Menu toggled",
+					body.classList.contains("show-sidebar"),
+				);
+			});
+		}
+
+		// Close on Outside Click
+		document.addEventListener("click", (e) => {
+			const sidebar = document.querySelector(".sidebar-container");
+			const toggle = document.getElementById("menu-toggle");
+
+			if (body.classList.contains("show-sidebar")) {
+				// If click target is NOT in sidebar AND NOT the toggle button
+				if (
+					sidebar &&
+					!sidebar.contains(e.target) &&
+					toggle &&
+					!toggle.contains(e.target)
+				) {
+					body.classList.remove("show-sidebar");
+				}
+			}
+		});
+	});
+</script>  <main class="full-width" data-astro-cid-sckkx6r4>  <div class="blog-page-layout"> <aside class="left-sidebar sidebar-container"> <aside class="sidebar" data-astro-cid-ssfzsv2f> <div class="mobile-header" data-astro-cid-ssfzsv2f> <h2 class="sidebar-title" data-astro-cid-ssfzsv2f><!-- Menu title removed as requested --></h2> <button id="sidebar-close" aria-label="Close Menu" data-astro-cid-ssfzsv2f> ✕ </button> </div> <div class="mobile-toggle" data-astro-cid-ssfzsv2f> <!-- Kept for backward compatibility if needed, but likely redundant now --> <button id="sidebar-toggle" aria-label="Toggle Menu" style="display: none;" data-astro-cid-ssfzsv2f>
+☰ Menu
+</button> </div> <div class="sidebar-content" id="sidebar-content" data-astro-cid-ssfzsv2f> <div class="profile-section" data-astro-cid-ssfzsv2f> <div class="avatar-container" data-astro-cid-ssfzsv2f> <img src="https://avatars.githubusercontent.com/u/27840392?v=4" alt="Lucas Sobral" class="avatar" data-astro-cid-ssfzsv2f> </div> <h3 class="profile-name" data-astro-cid-ssfzsv2f>Lucas Sobral</h3> <p class="profile-bio" data-astro-cid-ssfzsv2f>Simplifying technology, one line of code at a time.</p> </div> <!-- Mobile Navigation Links --> <!-- Mobile Only: About Link --> <div class="sidebar-section mobile-only-section" data-astro-cid-ssfzsv2f> <h3 data-astro-cid-ssfzsv2f> <a href="/about" class="sidebar-link" data-astro-cid-ssfzsv2f>About</a> </h3> </div> <!-- Categories: Desktop Only --> <div class="sidebar-section categories-section" data-astro-cid-ssfzsv2f> <h3 data-astro-cid-ssfzsv2f> <a href="/categories" class="sidebar-link" data-astro-cid-ssfzsv2f>Categories</a> </h3> </div> <!-- Archives: Desktop Only --> <div class="sidebar-section archives-section" data-astro-cid-ssfzsv2f> <h3 data-astro-cid-ssfzsv2f> <a href="/archives" class="sidebar-link" data-astro-cid-ssfzsv2f>Archives</a> </h3> </div> <div class="sidebar-section tags-section" data-astro-cid-ssfzsv2f> <h3 data-astro-cid-ssfzsv2f> <a href="/tags" class="sidebar-link" data-astro-cid-ssfzsv2f>Tags</a> </h3> </div> </div>  <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const closeBtn = document.getElementById("sidebar-close");
+            closeBtn?.addEventListener("click", () => {
+                document.body.classList.remove("show-sidebar");
+            });
+        });
+    </script> </aside> </aside> <article class="fade-in main-content"> <div class="hero-image"> <img width="1020" height="510" src="/assets/posts/2024-11-29/airflow.png" alt=""> </div> <div class="prose"> <div class="title"> <div class="date"> <time datetime="2024-11-28T16:00:00.000Z">Nov 28, 2024</time> <span class="date-separator">•</span>  <div class="view-count"> <span class="view-counter" data-astro-cid-e75zxctz> <span id="pageviews" data-astro-cid-e75zxctz> <span class="loading" data-astro-cid-e75zxctz>...</span> </span>
+views
+</span> <script type="module">document.addEventListener("DOMContentLoaded",()=>{const n=document.getElementById("pageviews");if(n!==null){const t=location.pathname.replace(/\/$/,""),o=`https://lucasbral.goatcounter.com/counter/${encodeURIComponent(t)}.json`;fetch(o).then(e=>e.json()).then(e=>{const c=e.count.replace(/\D/g,"");n.innerText=new Intl.NumberFormat().format(c)}).catch(e=>{console.error("Error fetching page views:",e),n.innerText="0"})}});</script>  </div> </div> <h1>Obtaining the Most Listened Tracks on Spotify with Apache Airflow</h1> <hr> </div>  <h2 id="introduction">Introduction</h2>
+<p>In this project, we will put into practice some of the most common skills in the data world. The goal is to automatically retrieve the top 50 most listened-to songs on Spotify worldwide on a daily basis and store this information in a non-relational database, in this case, MongoDB.</p>
+<p><img src="/assets/posts/2024-11-29/airflow2.png" alt="desktop View">
+<em>Pipeline Schema</em></p>
+<h3 id="pre-install">Pre-install</h3>
+<p>Our entire project will run on a pre-configured Docker image with Apache Airflow and MongoDB dependencies.</p>
+<p>You can check out a brief tutorial on how to install Airflow in the <a href="https://lucasbral.github.io/posts/airflow/">previous blog post</a>, which provides a more detailed explanation.</p>
+<p>In our case, we will use the same Docker image from the tutorial with just one environment modification, as we will need to install the MongoDB dependency for Airflow.</p>
+<p>For more details, check the official <a href="https://www.mongodb.com/developer/products/mongodb/mongodb-apache-airflow/">docs</a>.</p>
+<p>If they are not installed on your system, you can follow the tutorial available at <a href="https://docs.docker.com/install/#supported-platforms">Docker</a> and <a href="https://docs.docker.com/compose/install/">Docker Compose</a></p>
+<p>Remember to Add your user to the <code>docker</code> group by using a terminal to run:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">sudo</span><span style="color:#9ECBFF"> usermod</span><span style="color:#79B8FF"> -aG</span><span style="color:#9ECBFF"> docker</span><span style="color:#E1E4E8"> $USER</span></span></code></pre>
+<p>Sign out and back in again so your changes take effect</p>
+<p>On the <a href="https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html">official Apache Airflow page</a>, we find the link to download the latest version of Docker Compose. As of the time this post is being written, the most recent version is <code>2.10.3</code>, and we will be installing this version.</p>
+<p>In a directory, create a <code>docker-compose.yaml</code> file with the following configurations:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="docker"><code><span class="line"><span style="color:#E1E4E8">x-airflow-common:</span></span>
+<span class="line"><span style="color:#E1E4E8">  &#x26;airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">  build: ./airflow</span></span>
+<span class="line"><span style="color:#6A737D">  # build: .</span></span>
+<span class="line"><span style="color:#E1E4E8">  environment:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x26;airflow-common-env</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__CORE__EXECUTOR: CeleryExecutor</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__CORE__FERNET_KEY: </span><span style="color:#9ECBFF">''</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: </span><span style="color:#9ECBFF">'true'</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__CORE__LOAD_EXAMPLES: </span><span style="color:#9ECBFF">'true'</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__API__AUTH_BACKENDS: </span><span style="color:#9ECBFF">'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'</span></span>
+<span class="line"><span style="color:#6A737D">    # yamllint disable rule:line-length</span></span>
+<span class="line"><span style="color:#6A737D">    # Use simple http server on scheduler for health checks</span></span>
+<span class="line"><span style="color:#6A737D">    # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server</span></span>
+<span class="line"><span style="color:#6A737D">    # yamllint enable rule:line-length</span></span>
+<span class="line"><span style="color:#E1E4E8">    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: </span><span style="color:#9ECBFF">'true'</span></span>
+<span class="line"><span style="color:#6A737D">    # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks</span></span>
+<span class="line"><span style="color:#6A737D">    # for other purpose (development, test and especially production usage) build/extend Airflow image.</span></span>
+<span class="line"><span style="color:#E1E4E8">    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}</span></span>
+<span class="line"><span style="color:#6A737D">    # The following line can be used to set a custom config file, stored in the local config folder</span></span>
+<span class="line"><span style="color:#6A737D">    # If you want to use it, outcomment it and replace airflow.cfg with the name of your config file</span></span>
+<span class="line"><span style="color:#6A737D">    # AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'</span></span>
+<span class="line"><span style="color:#E1E4E8">  volumes:</span></span>
+<span class="line"><span style="color:#E1E4E8">    - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags</span></span>
+<span class="line"><span style="color:#E1E4E8">    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs</span></span>
+<span class="line"><span style="color:#E1E4E8">    - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config</span></span>
+<span class="line"><span style="color:#E1E4E8">    - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins</span></span>
+<span class="line"><span style="color:#E1E4E8">  user: </span><span style="color:#9ECBFF">"${AIRFLOW_UID:-50000}:0"</span></span>
+<span class="line"><span style="color:#E1E4E8">  depends_on:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x26;airflow-common-depends-on</span></span>
+<span class="line"><span style="color:#E1E4E8">    redis:</span></span>
+<span class="line"><span style="color:#E1E4E8">      condition: service_healthy</span></span>
+<span class="line"><span style="color:#E1E4E8">    postgres:</span></span>
+<span class="line"><span style="color:#E1E4E8">      condition: service_healthy</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">services:</span></span>
+<span class="line"><span style="color:#E1E4E8">  postgres:</span></span>
+<span class="line"><span style="color:#E1E4E8">    image: postgres:13</span></span>
+<span class="line"><span style="color:#E1E4E8">    environment:</span></span>
+<span class="line"><span style="color:#E1E4E8">      POSTGRES_USER: airflow</span></span>
+<span class="line"><span style="color:#E1E4E8">      POSTGRES_PASSWORD: airflow</span></span>
+<span class="line"><span style="color:#E1E4E8">      POSTGRES_DB: airflow</span></span>
+<span class="line"><span style="color:#E1E4E8">    volumes:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - postgres-db-volume:/var/lib/postgresql/data</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#E1E4E8">      test: [</span><span style="color:#9ECBFF">"CMD"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"pg_isready"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"-U"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"airflow"</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 5</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 5s</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  redis:</span></span>
+<span class="line"><span style="color:#6A737D">    # Redis is limited to 7.2-bookworm due to licencing change</span></span>
+<span class="line"><span style="color:#6A737D">    # https://redis.io/blog/redis-adopts-dual-source-available-licensing/</span></span>
+<span class="line"><span style="color:#E1E4E8">    image: redis:7.2-bookworm</span></span>
+<span class="line"><span style="color:#E1E4E8">    expose:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - 6379</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#E1E4E8">      test: [</span><span style="color:#9ECBFF">"CMD"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"redis-cli"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"ping"</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      timeout: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 50</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  airflow-webserver:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    command: webserver</span></span>
+<span class="line"><span style="color:#E1E4E8">    ports:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - </span><span style="color:#9ECBFF">"8080:8080"</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#E1E4E8">      test: [</span><span style="color:#9ECBFF">"CMD"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"curl"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"--fail"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"http://localhost:8080/health"</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">      timeout: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 5</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"><span style="color:#E1E4E8">    depends_on:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-depends-on</span></span>
+<span class="line"><span style="color:#E1E4E8">      airflow-init:</span></span>
+<span class="line"><span style="color:#E1E4E8">        condition: service_completed_successfully</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  airflow-scheduler:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    command: scheduler</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#E1E4E8">      test: [</span><span style="color:#9ECBFF">"CMD"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"curl"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"--fail"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"http://localhost:8974/health"</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">      timeout: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 5</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"><span style="color:#E1E4E8">    depends_on:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-depends-on</span></span>
+<span class="line"><span style="color:#E1E4E8">      airflow-init:</span></span>
+<span class="line"><span style="color:#E1E4E8">        condition: service_completed_successfully</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  airflow-worker:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    command: celery worker</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#6A737D">      # yamllint disable rule:line-length</span></span>
+<span class="line"><span style="color:#E1E4E8">      test:</span></span>
+<span class="line"><span style="color:#E1E4E8">        - </span><span style="color:#9ECBFF">"CMD-SHELL"</span></span>
+<span class="line"><span style="color:#E1E4E8">        - </span><span style="color:#9ECBFF">'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">      timeout: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 5</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">    environment:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-env</span></span>
+<span class="line"><span style="color:#6A737D">      # Required to handle warm shutdown of the celery workers properly</span></span>
+<span class="line"><span style="color:#6A737D">      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation</span></span>
+<span class="line"><span style="color:#E1E4E8">      DUMB_INIT_SETSID: </span><span style="color:#9ECBFF">"0"</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"><span style="color:#E1E4E8">    depends_on:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-depends-on</span></span>
+<span class="line"><span style="color:#E1E4E8">      airflow-init:</span></span>
+<span class="line"><span style="color:#E1E4E8">        condition: service_completed_successfully</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  airflow-triggerer:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    command: triggerer</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#E1E4E8">      test: [</span><span style="color:#9ECBFF">"CMD-SHELL"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"'</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">      timeout: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 5</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"><span style="color:#E1E4E8">    depends_on:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-depends-on</span></span>
+<span class="line"><span style="color:#E1E4E8">      airflow-init:</span></span>
+<span class="line"><span style="color:#E1E4E8">        condition: service_completed_successfully</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  airflow-init:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    entrypoint: /bin/bash</span></span>
+<span class="line"><span style="color:#6A737D">    # yamllint disable rule:line-length</span></span>
+<span class="line"><span style="color:#E1E4E8">    command:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - -c</span></span>
+<span class="line"><span style="color:#E1E4E8">      - |</span></span>
+<span class="line"><span style="color:#E1E4E8">        if [[ -z </span><span style="color:#9ECBFF">"${AIRFLOW_UID}"</span><span style="color:#E1E4E8"> ]]; then</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo -e </span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\0</span><span style="color:#9ECBFF">33[1;33mWARNING!!!: AIRFLOW_UID not set!</span><span style="color:#79B8FF">\e</span><span style="color:#9ECBFF">[0m"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"If you are on Linux, you SHOULD follow the instructions below to set "</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"AIRFLOW_UID environment variable, otherwise files will be owned by root."</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"For other operating systems you can get rid of the warning with manually created .env file:"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"    See: https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">        fi</span></span>
+<span class="line"><span style="color:#E1E4E8">        one_meg=1048576</span></span>
+<span class="line"><span style="color:#E1E4E8">        mem_available=$$(($$(getconf _PHYS_PAGES) * $$(getconf PAGE_SIZE) / one_meg))</span></span>
+<span class="line"><span style="color:#E1E4E8">        cpus_available=$$(grep -cE </span><span style="color:#9ECBFF">'cpu[0-9]+'</span><span style="color:#E1E4E8"> /proc/stat)</span></span>
+<span class="line"><span style="color:#E1E4E8">        disk_available=$$(df / | tail -1 | awk </span><span style="color:#9ECBFF">'{print $$4}'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        warning_resources=</span><span style="color:#9ECBFF">"false"</span></span>
+<span class="line"><span style="color:#E1E4E8">        if (( mem_available &#x3C; 4000 )) ; then</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo -e </span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\0</span><span style="color:#9ECBFF">33[1;33mWARNING!!!: Not enough memory available for Docker.</span><span style="color:#79B8FF">\e</span><span style="color:#9ECBFF">[0m"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"At least 4GB of memory required. You have $$(numfmt --to iec $$((mem_available * one_meg)))"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          warning_resources=</span><span style="color:#9ECBFF">"true"</span></span>
+<span class="line"><span style="color:#E1E4E8">        fi</span></span>
+<span class="line"><span style="color:#E1E4E8">        if (( cpus_available &#x3C; 2 )); then</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo -e </span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\0</span><span style="color:#9ECBFF">33[1;33mWARNING!!!: Not enough CPUS available for Docker.</span><span style="color:#79B8FF">\e</span><span style="color:#9ECBFF">[0m"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"At least 2 CPUs recommended. You have $${cpus_available}"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          warning_resources=</span><span style="color:#9ECBFF">"true"</span></span>
+<span class="line"><span style="color:#E1E4E8">        fi</span></span>
+<span class="line"><span style="color:#E1E4E8">        if (( disk_available &#x3C; one_meg * 10 )); then</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo -e </span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\0</span><span style="color:#9ECBFF">33[1;33mWARNING!!!: Not enough Disk space available for Docker.</span><span style="color:#79B8FF">\e</span><span style="color:#9ECBFF">[0m"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"At least 10 GBs recommended. You have $$(numfmt --to iec $$((disk_available * 1024 )))"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          warning_resources=</span><span style="color:#9ECBFF">"true"</span></span>
+<span class="line"><span style="color:#E1E4E8">        fi</span></span>
+<span class="line"><span style="color:#E1E4E8">        if [[ $${warning_resources} == </span><span style="color:#9ECBFF">"true"</span><span style="color:#E1E4E8"> ]]; then</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo -e </span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">\0</span><span style="color:#9ECBFF">33[1;33mWARNING!!!: You have not enough resources to run Airflow (see above)!</span><span style="color:#79B8FF">\e</span><span style="color:#9ECBFF">[0m"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"Please follow the instructions to increase amount of resources available:"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo </span><span style="color:#9ECBFF">"   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"</span></span>
+<span class="line"><span style="color:#E1E4E8">          echo</span></span>
+<span class="line"><span style="color:#E1E4E8">        fi</span></span>
+<span class="line"><span style="color:#E1E4E8">        mkdir -p /sources/logs /sources/dags /sources/plugins</span></span>
+<span class="line"><span style="color:#E1E4E8">        chown -R </span><span style="color:#9ECBFF">"${AIRFLOW_UID}:0"</span><span style="color:#E1E4E8"> /sources/{logs,dags,plugins}</span></span>
+<span class="line"><span style="color:#E1E4E8">        exec /entrypoint airflow version</span></span>
+<span class="line"><span style="color:#6A737D">    # yamllint enable rule:line-length</span></span>
+<span class="line"><span style="color:#E1E4E8">    environment:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-env</span></span>
+<span class="line"><span style="color:#E1E4E8">      _AIRFLOW_DB_MIGRATE: </span><span style="color:#9ECBFF">'true'</span></span>
+<span class="line"><span style="color:#E1E4E8">      _AIRFLOW_WWW_USER_CREATE: </span><span style="color:#9ECBFF">'true'</span></span>
+<span class="line"><span style="color:#E1E4E8">      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}</span></span>
+<span class="line"><span style="color:#E1E4E8">      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}</span></span>
+<span class="line"><span style="color:#E1E4E8">      _PIP_ADDITIONAL_REQUIREMENTS: </span><span style="color:#9ECBFF">''</span></span>
+<span class="line"><span style="color:#E1E4E8">    user: </span><span style="color:#9ECBFF">"0:0"</span></span>
+<span class="line"><span style="color:#E1E4E8">    volumes:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - ${AIRFLOW_PROJ_DIR:-.}:/sources</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">  airflow-cli:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    profiles:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - debug</span></span>
+<span class="line"><span style="color:#E1E4E8">    environment:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-env</span></span>
+<span class="line"><span style="color:#E1E4E8">      CONNECTION_CHECK_MAX_COUNT: </span><span style="color:#9ECBFF">"0"</span></span>
+<span class="line"><span style="color:#6A737D">    # Workaround for entrypoint issue. See: https://github.com/apache/airflow/issues/16252</span></span>
+<span class="line"><span style="color:#E1E4E8">    command:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - bash</span></span>
+<span class="line"><span style="color:#E1E4E8">      - -c</span></span>
+<span class="line"><span style="color:#E1E4E8">      - airflow</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">  # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up</span></span>
+<span class="line"><span style="color:#6A737D">  # or by explicitly targeted on the command line e.g. docker-compose up flower.</span></span>
+<span class="line"><span style="color:#6A737D">  # See: https://docs.docker.com/compose/profiles/</span></span>
+<span class="line"><span style="color:#E1E4E8">  flower:</span></span>
+<span class="line"><span style="color:#E1E4E8">    &#x3C;&#x3C;: *airflow-common</span></span>
+<span class="line"><span style="color:#E1E4E8">    command: celery flower</span></span>
+<span class="line"><span style="color:#E1E4E8">    profiles:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - flower</span></span>
+<span class="line"><span style="color:#E1E4E8">    ports:</span></span>
+<span class="line"><span style="color:#E1E4E8">      - </span><span style="color:#9ECBFF">"5555:5555"</span></span>
+<span class="line"><span style="color:#E1E4E8">    healthcheck:</span></span>
+<span class="line"><span style="color:#E1E4E8">      test: [</span><span style="color:#9ECBFF">"CMD"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"curl"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"--fail"</span><span style="color:#E1E4E8">, </span><span style="color:#9ECBFF">"http://localhost:5555/"</span><span style="color:#E1E4E8">]</span></span>
+<span class="line"><span style="color:#E1E4E8">      interval: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">      timeout: 10s</span></span>
+<span class="line"><span style="color:#E1E4E8">      retries: 5</span></span>
+<span class="line"><span style="color:#E1E4E8">      start_period: 30s</span></span>
+<span class="line"><span style="color:#E1E4E8">    restart: always</span></span>
+<span class="line"><span style="color:#E1E4E8">    depends_on:</span></span>
+<span class="line"><span style="color:#E1E4E8">      &#x3C;&#x3C;: *airflow-common-depends-on</span></span>
+<span class="line"><span style="color:#E1E4E8">      airflow-init:</span></span>
+<span class="line"><span style="color:#E1E4E8">        condition: service_completed_successfully</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">volumes:</span></span>
+<span class="line"><span style="color:#E1E4E8">  postgres-db-volume:</span></span></code></pre>
+<p>After that we will create the folders that will be shared between your computer and the container:</p>
+<ul>
+<li><code>./dags</code>:  DAG directory.</li>
+<li><code>./logs</code>: Will kepp logs of task executions and the scheduler.</li>
+<li><code>./plugins</code>: Plugins directory.</li>
+<li><code>./config</code>: Configuration files will be stored here.</li>
+<li><code>./airflow</code>: Dockerfile directory.</li>
+</ul>
+<p>On Linux, the quick-start setup needs to know your host user ID and requires the group ID to be set to 0. Otherwise, the files created in <code>dags</code>, <code>logs</code>, and <code>plugins</code> will be owned by the root user. You must ensure that these configurations are set correctly in your <code>docker-compose</code> setup.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">mkdir</span><span style="color:#79B8FF"> -p</span><span style="color:#9ECBFF"> ./dags</span><span style="color:#9ECBFF"> ./logs</span><span style="color:#9ECBFF"> ./plugins</span><span style="color:#9ECBFF"> ./config</span><span style="color:#9ECBFF"> ./airflow</span></span>
+<span class="line"><span style="color:#79B8FF">echo</span><span style="color:#79B8FF"> -e</span><span style="color:#9ECBFF"> "AIRFLOW_UID=$(</span><span style="color:#B392F0">id</span><span style="color:#79B8FF"> -u</span><span style="color:#9ECBFF">)"</span><span style="color:#F97583"> ></span><span style="color:#9ECBFF"> .env</span></span></code></pre>
+<p>After that, create a <code>Dockerfile</code> in the <code>/airflow</code> folder with the following configurations:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="docker"><code><span class="line"><span style="color:#F97583">FROM</span><span style="color:#E1E4E8"> apache/airflow:2.10.3</span></span>
+<span class="line"><span style="color:#6A737D"># add your dependencies here:</span></span>
+<span class="line"><span style="color:#F97583">RUN</span><span style="color:#E1E4E8"> pip install apache-airflow-providers-mongo</span></span></code></pre>
+<p>The Apache Airflow instance can now be initialized using :</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">docker</span><span style="color:#9ECBFF"> compose</span><span style="color:#9ECBFF"> up</span><span style="color:#79B8FF"> --build</span><span style="color:#9ECBFF"> airflow-init</span></span></code></pre>
+<p>Now you can start all services:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="bash"><code><span class="line"><span style="color:#B392F0">docker</span><span style="color:#9ECBFF"> compose</span><span style="color:#9ECBFF"> up</span></span></code></pre>
+<p>Airflow will be available at <code>0.0.0.0:8080</code>, and to log in, simply use <code>airflow</code> as both the username and password, as this is the default configuration.</p>
+<h2 id="spotify-api">Spotify API</h2>
+<p>To obtain data from Spotify, it is necessary to create an account and also create an app within the Spotify API Dashboard under the Developer area. Here is a link to the API documentation with a brief description: <a href="https://developer.spotify.com/documentation/web-api">docs</a>.</p>
+<p>Basically, we will need two pieces of information: the <code>client_id</code> and <code>client_secret</code>. With these two keys, it is possible to generate an <code>access_token</code> (<a href="https://developer.spotify.com/documentation/web-api/concepts/access-token">docs</a>).</p>
+<p>With the access token, it is possible to communicate with the Spotify API and retrieve a variety of information.</p>
+<blockquote>
+<p>The <code>access_token</code> is valid for only 1 hour, so we have the option to either refresh it or request a new one. In my case, I chose to request a new token each time, as the pipeline is scheduled to run only once per day.
+{: .prompt-tip }</p>
+</blockquote>
+<h2 id="setting-up-apache-airflow">Setting up Apache Airflow</h2>
+<p>Airflow has a very useful feature to define variables and secrets that can be used in DAGs and Tasks.</p>
+<p>We will use it to store the Spotify API information.</p>
+<p>To do this, on the front end, click on <strong>Admin</strong> > <strong>Variables</strong> > <strong>add new record</strong></p>
+<p><img src="/assets/posts/2024-11-29/1.png" alt="desktop View">
+<em>add client_id and client_secret</em></p>
+<p>Add the <code>client_id</code> and <code>client_secret</code> information and click <strong>Save</strong>.</p>
+<h2 id="configuring-mongo-db">Configuring Mongo DB</h2>
+<p>Before anything, it is necessary to create an account on <a href="https://www.mongodb.com/">MongoDB</a> and set up a cluster. For this project, we will use the Free Tier.</p>
+<p><img src="/assets/posts/2024-11-29/2.png" alt="desktop View">
+<em>Mongo DB homepage</em></p>
+<p>Click on Database Access > add new database user</p>
+<p>Use the authentication method with a password, define the user’s role.</p>
+<p>And make sure to store the password in a secure place as it will be needed later.</p>
+<p>Click on Network Acess Allow IP access to the port.</p>
+<p><img src="/assets/posts/2024-11-29/3.png" alt="desktop View">
+<em>Acess Network</em></p>
+<p>It is also necessary to create a new database and collection within the cluster. This is where the music information will be saved. In my case, the database “spotify” was created in the “currency collection” collection.</p>
+<p><img src="/assets/posts/2024-11-29/4.png" alt="desktop View">
+<em>Creating Database and Collection</em></p>
+<h2 id="creating-a-connection-to-mongodb-in-airflow">Creating a connection to MongoDB in Airflow</h2>
+<p>Agora que o MongoDB está devidamente configurado, é necessário conectá-lo no Airflow. Para isso, basta ir na aba <strong>Admin > Connections</strong> > <strong>add new record</strong> .</p>
+<p>And set it up as shown below:</p>
+<p>Set up the connection as shown below:</p>
+<ul>
+<li><strong>Conn Id:</strong> mongo</li>
+<li><strong>Conn Type:</strong> MongoDB</li>
+<li><strong>Host:</strong> cluster0.mtfak.mongodb.net</li>
+<li><strong>Login:</strong> myuser (set before on the MongoDB webpage)</li>
+<li><strong>Password:</strong> mypass (set before on the MongoDB webpage)</li>
+<li><strong>Port:</strong> empty</li>
+<li><strong>Extra:</strong> <code>{"srv": true}</code></li>
+</ul>
+<p>Click on Save.</p>
+<h2 id="airflow-dag">Airflow DAG</h2>
+<p>Our pipeline will have 3 main parts:</p>
+<ol>
+<li>Obtain the access_token from the Spotify API.</li>
+<li>With the access_token in hand, make the request to the Spotify Playlist API to get the information of the 50 most played songs of the day (from the Top 50 Global playlist).</li>
+<li>Save the JSON object in MongoDB.</li>
+</ol>
+<h3 id="1---get-acess-token">1 - Get Acess Token</h3>
+<p>The get_token task retrieves the access token from the Spotify API by sending a request with the client credentials. It encodes the client ID and secret in base64, makes a POST request to Spotify’s token endpoint, and returns the access token as an XCom.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#B392F0">    @task</span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> get_token</span><span style="color:#E1E4E8">():</span></span>
+<span class="line"><span style="color:#6A737D">        # get credentials</span></span>
+<span class="line"><span style="color:#E1E4E8">        client_id </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> Variable.get(</span><span style="color:#9ECBFF">"client_id"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        client_secret </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> Variable.get(</span><span style="color:#9ECBFF">"client_secret"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">        auth_string </span><span style="color:#F97583">=</span><span style="color:#F97583"> f</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">client_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">client_secret</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#E1E4E8">        auth_bytes </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> auth_string.encode(</span><span style="color:#9ECBFF">'utf-8'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        auth_base64 </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> base64.b64encode(auth_bytes).decode(</span><span style="color:#9ECBFF">'utf-8'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#6A737D">        # make request</span></span>
+<span class="line"><span style="color:#E1E4E8">        url </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> 'https://accounts.spotify.com/api/token'</span></span>
+<span class="line"><span style="color:#E1E4E8">        headers </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">            'Authorization'</span><span style="color:#E1E4E8">: </span><span style="color:#F97583">f</span><span style="color:#9ECBFF">'Basic </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">auth_base64</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">'</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">        data </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">            'grant_type'</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">'client_credentials'</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">        response </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> requests.post(url, </span><span style="color:#FFAB70">headers</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">headers, </span><span style="color:#FFAB70">data</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">data)</span></span>
+<span class="line"><span style="color:#79B8FF">        print</span><span style="color:#E1E4E8">(response.json().get(</span><span style="color:#9ECBFF">'access_token'</span><span style="color:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#6A737D">        #transform token in a xcom</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> response.json().get(</span><span style="color:#9ECBFF">'access_token'</span><span style="color:#E1E4E8">)</span></span></code></pre>
+<h3 id="2---obtain-playlist-songs">2 - Obtain Playlist Songs</h3>
+<p>The get_playlist task retrieves the top 50 tracks from a specific Spotify playlist using the provided access token. It sends a GET request to the Spotify API and returns the playlist data in JSON format if the request is successful.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#B392F0">    @task</span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> get_playlist</span><span style="color:#E1E4E8">(token):</span></span>
+<span class="line"><span style="color:#E1E4E8">        url </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> 'https://api.spotify.com/v1/playlists/5FN6Ego7eLX6zHuCMovIR2/tracks?limit=50&#x26;offset=0'</span></span>
+<span class="line"><span style="color:#E1E4E8">        headers </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">        'Authorization'</span><span style="color:#E1E4E8">: </span><span style="color:#F97583">f</span><span style="color:#9ECBFF">'Bearer </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">token</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">'</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">        response </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> requests.get(url, </span><span style="color:#FFAB70">headers</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">headers)</span></span>
+<span class="line"><span style="color:#F97583">        if</span><span style="color:#E1E4E8"> response.status_code </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> 200</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#F97583">            return</span><span style="color:#E1E4E8"> response.json()</span></span></code></pre>
+<h3 id="3---ingest-data-on-mongo-db">3 - Ingest Data on Mongo DB</h3>
+<p>The load_data_to_mongo_db task connects to a MongoDB database using the MongoHook, inserts the result (with a timestamp) into the currency_collection of the spotify database, and logs the connection details.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#B392F0">    @task</span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> load_data_to_mongo_db</span><span style="color:#E1E4E8">(result):</span></span>
+<span class="line"><span style="color:#E1E4E8">        hook </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> MongoHook(</span><span style="color:#FFAB70">conn_id</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">'mongo'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        client </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> hook.get_conn()</span></span>
+<span class="line"><span style="color:#E1E4E8">        db </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (</span></span>
+<span class="line"><span style="color:#E1E4E8">        client.spotify</span></span>
+<span class="line"><span style="color:#E1E4E8">        )</span></span>
+<span class="line"><span style="color:#E1E4E8">        currency_collection </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> db.currency_collection</span></span>
+<span class="line"><span style="color:#79B8FF">        print</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">f</span><span style="color:#9ECBFF">"connected to MongoDB - </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">client.server_info()</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        current_datetime </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> pendulum.now().to_iso8601_string()</span></span>
+<span class="line"><span style="color:#E1E4E8">        result[</span><span style="color:#9ECBFF">"datetime"</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> current_datetime</span></span>
+<span class="line"><span style="color:#E1E4E8">        currency_collection.insert_one(result)</span></span></code></pre>
+<p>Here is our complete DAG:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="python"><code><span class="line"><span style="color:#F97583">from</span><span style="color:#E1E4E8"> airflow.decorators </span><span style="color:#F97583">import</span><span style="color:#E1E4E8"> dag, task</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> pendulum</span></span>
+<span class="line"><span style="color:#F97583">from</span><span style="color:#E1E4E8"> pendulum </span><span style="color:#F97583">import</span><span style="color:#E1E4E8"> datetime</span></span>
+<span class="line"><span style="color:#F97583">from</span><span style="color:#E1E4E8"> airflow.models </span><span style="color:#F97583">import</span><span style="color:#E1E4E8"> Variable</span></span>
+<span class="line"><span style="color:#F97583">from</span><span style="color:#E1E4E8"> airflow.providers.mongo.hooks.mongo </span><span style="color:#F97583">import</span><span style="color:#E1E4E8"> MongoHook</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> json</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> base64</span></span>
+<span class="line"><span style="color:#F97583">import</span><span style="color:#E1E4E8"> requests</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">@dag</span><span style="color:#E1E4E8">(</span></span>
+<span class="line"><span style="color:#FFAB70">    start_date</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">datetime(</span><span style="color:#79B8FF">2024</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">11</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">21</span><span style="color:#E1E4E8">),</span></span>
+<span class="line"><span style="color:#FFAB70">    schedule</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">"@daily"</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#FFAB70">    tags</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">[</span><span style="color:#9ECBFF">"spotify_api"</span><span style="color:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#FFAB70">    catchup</span><span style="color:#F97583">=</span><span style="color:#79B8FF">False</span><span style="color:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">def</span><span style="color:#B392F0"> pipe</span><span style="color:#E1E4E8">():</span></span>
+<span class="line"><span style="color:#B392F0">    @task</span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> get_token</span><span style="color:#E1E4E8">():</span></span>
+<span class="line"><span style="color:#6A737D">        # get credentials</span></span>
+<span class="line"><span style="color:#E1E4E8">        client_id </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> Variable.get(</span><span style="color:#9ECBFF">"client_id"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        client_secret </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> Variable.get(</span><span style="color:#9ECBFF">"client_secret"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">        # Codificando as credenciais em base64</span></span>
+<span class="line"><span style="color:#E1E4E8">        auth_string </span><span style="color:#F97583">=</span><span style="color:#F97583"> f</span><span style="color:#9ECBFF">"</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">client_id</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">:</span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">client_secret</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">"</span></span>
+<span class="line"><span style="color:#E1E4E8">        auth_bytes </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> auth_string.encode(</span><span style="color:#9ECBFF">'utf-8'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        auth_base64 </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> base64.b64encode(auth_bytes).decode(</span><span style="color:#9ECBFF">'utf-8'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">        url </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> 'https://accounts.spotify.com/api/token'</span></span>
+<span class="line"><span style="color:#E1E4E8">        headers </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">            'Authorization'</span><span style="color:#E1E4E8">: </span><span style="color:#F97583">f</span><span style="color:#9ECBFF">'Basic </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">auth_base64</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">'</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">        data </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">            'grant_type'</span><span style="color:#E1E4E8">: </span><span style="color:#9ECBFF">'client_credentials'</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#6A737D">        # Fazendo a solicitação POST</span></span>
+<span class="line"><span style="color:#E1E4E8">        response </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> requests.post(url, </span><span style="color:#FFAB70">headers</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">headers, </span><span style="color:#FFAB70">data</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">data)</span></span>
+<span class="line"><span style="color:#79B8FF">        print</span><span style="color:#E1E4E8">(response.json().get(</span><span style="color:#9ECBFF">'access_token'</span><span style="color:#E1E4E8">))</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#E1E4E8"> response.json().get(</span><span style="color:#9ECBFF">'access_token'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">    @task</span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> get_playlist</span><span style="color:#E1E4E8">(token):</span></span>
+<span class="line"><span style="color:#E1E4E8">        url </span><span style="color:#F97583">=</span><span style="color:#9ECBFF"> 'https://api.spotify.com/v1/playlists/5FN6Ego7eLX6zHuCMovIR2/tracks?limit=50&#x26;offset=0'</span></span>
+<span class="line"><span style="color:#E1E4E8">        headers </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#9ECBFF">        'Authorization'</span><span style="color:#E1E4E8">: </span><span style="color:#F97583">f</span><span style="color:#9ECBFF">'Bearer </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">token</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">'</span></span>
+<span class="line"><span style="color:#E1E4E8">        }</span></span>
+<span class="line"><span style="color:#E1E4E8">        response </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> requests.get(url, </span><span style="color:#FFAB70">headers</span><span style="color:#F97583">=</span><span style="color:#E1E4E8">headers)</span></span>
+<span class="line"><span style="color:#F97583">        if</span><span style="color:#E1E4E8"> response.status_code </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> 200</span><span style="color:#E1E4E8">:</span></span>
+<span class="line"><span style="color:#F97583">            return</span><span style="color:#E1E4E8"> response.json()</span></span>
+<span class="line"><span style="color:#E1E4E8">        </span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#B392F0">    @task</span></span>
+<span class="line"><span style="color:#F97583">    def</span><span style="color:#B392F0"> load_data_to_mongo_db</span><span style="color:#E1E4E8">(result):</span></span>
+<span class="line"><span style="color:#E1E4E8">        hook </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> MongoHook(</span><span style="color:#FFAB70">conn_id</span><span style="color:#F97583">=</span><span style="color:#9ECBFF">'mongo'</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        client </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> hook.get_conn()</span></span>
+<span class="line"><span style="color:#E1E4E8">        db </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (</span></span>
+<span class="line"><span style="color:#E1E4E8">        client.spotify</span></span>
+<span class="line"><span style="color:#E1E4E8">        )</span></span>
+<span class="line"><span style="color:#E1E4E8">        currency_collection </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> db.currency_collection</span></span>
+<span class="line"><span style="color:#79B8FF">        print</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">f</span><span style="color:#9ECBFF">"connected to MongoDB - </span><span style="color:#79B8FF">{</span><span style="color:#E1E4E8">client.server_info()</span><span style="color:#79B8FF">}</span><span style="color:#9ECBFF">"</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">        current_datetime </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> pendulum.now().to_iso8601_string()</span></span>
+<span class="line"><span style="color:#E1E4E8">        result[</span><span style="color:#9ECBFF">"datetime"</span><span style="color:#E1E4E8">] </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> current_datetime</span></span>
+<span class="line"><span style="color:#E1E4E8">        currency_collection.insert_one(result)</span></span>
+<span class="line"><span style="color:#E1E4E8">    </span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">    load_data_to_mongo_db(get_playlist(get_token()))</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">pipe()</span></span></code></pre>
+<blockquote>
+<p>The <code>pipe.py</code> must be on the dags directory.
+{: .prompt-tip }</p>
+</blockquote>
+<h2 id="observing-the-jobs-in-the-airflow-frontend">Observing the Jobs in the Airflow Frontend</h2>
+<p>Now that our DAG is configured, simply run it manually once for testing, and let Airflow handle the orchestration to execute the code daily.</p>
+<p><img src="/assets/posts/2024-11-29/6.png" alt="desktop View">
+<em>Airflow Jobs running</em></p>
+<p><img src="/assets/posts/2024-11-29/7.png" alt="desktop View">
+<em>Graph View Job</em></p>
+<p>The code worked as expected, and the pipeline is successfully retrieving playlist information, orchestrated via Airflow!</p>
+<p>In MongoDB, it is possible to see the data loads made:</p>
+<p><img src="/assets/posts/2024-11-29/8.png" alt="desktop View">
+<em>Graph View Job</em></p>
+<h2 id="conclusions">Conclusions</h2>
+<p>This project successfully demonstrates the power of Apache Airflow in orchestrating a data pipeline to fetch the most played tracks on Spotify daily. By leveraging Spotify’s API and MongoDB for storage, we were able to automate the process of retrieving and storing the data. The use of Docker and MongoDB integration with Airflow allowed for a smooth execution of tasks, ensuring that the pipeline runs automatically each day with minimal intervention. This solution is a great example of how data engineering tools can be used to automate data collection and storage processes, providing valuable insights in an efficient and scalable manner.</p>
+<p>All the codes are available in the <a href="https://github.com/lucasbral/spotify_pipeline/tree/main">GitHub Repo</a>.</p>  </div> </article> <!-- Right Sidebar (Desktop Only) --> <aside class="right-sidebar-container"> <aside class="right-sidebar" data-astro-cid-zujyv34g> <div class="sidebar-section" data-astro-cid-zujyv34g> <h3 data-astro-cid-zujyv34g>Recently Updated</h3> <ul class="recent-list" data-astro-cid-zujyv34g> <li data-astro-cid-zujyv34g> <a href="/blog/2025-06-27/2025-06-27-streamlit-duckdb/" class="recent-link" data-astro-cid-zujyv34g> <span class="recent-title" data-astro-cid-zujyv34g>Building a High-Performance and Interactive Data Application with Streamlit and DuckDB</span> <span class="recent-date" data-astro-cid-zujyv34g> <time datetime="2025-06-26T16:00:00.000Z">Jun 26, 2025</time> </span> </a> </li><li data-astro-cid-zujyv34g> <a href="/blog/2025-02-25/2025-02-25-aws-pipeline/" class="recent-link" data-astro-cid-zujyv34g> <span class="recent-title" data-astro-cid-zujyv34g>Creating A Small Data Pipeline Using Dynamodb And Lambda Functions On Aws</span> <span class="recent-date" data-astro-cid-zujyv34g> <time datetime="2025-02-24T16:00:00.000Z">Feb 24, 2025</time> </span> </a> </li><li data-astro-cid-zujyv34g> <a href="/blog/2024-11-29/2024-11-29-spotify/" class="recent-link" data-astro-cid-zujyv34g> <span class="recent-title" data-astro-cid-zujyv34g>Obtaining the Most Listened Tracks on Spotify with Apache Airflow</span> <span class="recent-date" data-astro-cid-zujyv34g> <time datetime="2024-11-28T16:00:00.000Z">Nov 28, 2024</time> </span> </a> </li><li data-astro-cid-zujyv34g> <a href="/blog/2024-11-11/2024-11-11-airflow/" class="recent-link" data-astro-cid-zujyv34g> <span class="recent-title" data-astro-cid-zujyv34g>Apache Airflow Using Docker</span> <span class="recent-date" data-astro-cid-zujyv34g> <time datetime="2024-11-11T06:10:00.000Z">Nov 11, 2024</time> </span> </a> </li><li data-astro-cid-zujyv34g> <a href="/blog/2024-11-03/2024-11-03-fut-scrap/" class="recent-link" data-astro-cid-zujyv34g> <span class="recent-title" data-astro-cid-zujyv34g>Scrapping football data from optaplayerstats.statsperform.com</span> <span class="recent-date" data-astro-cid-zujyv34g> <time datetime="2024-11-03T06:10:00.000Z">Nov 3, 2024</time> </span> </a> </li> </ul> </div> <div class="sidebar-section" data-astro-cid-zujyv34g> <h3 data-astro-cid-zujyv34g>Trending Tags</h3> <div class="tag-cloud" data-astro-cid-zujyv34g> <a href="/tags/airflow/" class="tag-item" data-astro-cid-zujyv34g> Airflow </a><a href="/tags/streamlit/" class="tag-item" data-astro-cid-zujyv34g> Streamlit </a><a href="/tags/duckdb/" class="tag-item" data-astro-cid-zujyv34g> Duckdb </a><a href="/tags/aws/" class="tag-item" data-astro-cid-zujyv34g> AWS </a><a href="/tags/spotify/" class="tag-item" data-astro-cid-zujyv34g> Spotify </a><a href="/tags/selenium/" class="tag-item" data-astro-cid-zujyv34g> Selenium </a><a href="/tags/beautifulsoup4/" class="tag-item" data-astro-cid-zujyv34g> Beautifulsoup4 </a> </div> </div> </aside>  </aside> </div>  </main> <footer data-astro-cid-sz7xmlte>
+&copy; 2026 Lucas Sobral. All rights reserved.
+<p class="social-links" data-astro-cid-sz7xmlte> <a href="https://github.com/lucasbral" target="_blank" data-astro-cid-sz7xmlte>GitHub</a> <a href="https://www.linkedin.com/in/lucasbral" target="_blank" data-astro-cid-sz7xmlte>LinkedIn</a> </p> </footer>  </body></html> 
