@@ -6,78 +6,75 @@ import ProjectCard from "../components/about/ProjectCard.astro";
 
 const timelineItems = [
     {
-        title: "Engenharia e Análise de Dados",
-        date: "2022 - Hoje",
+        title: "Data Engineering and Analysis",
+        date: "2022 - Present",
         description:
-            "Engenheiro de Dados Júnior, lidando com tecnologias Cloud, ETL e arquitetura de dados modernos.",
+            "Junior Data Engineer, working with Cloud technologies, ETL, and modern data architecture.",
     },
     {
-        title: "Desenvolvimento de Software Automotivo",
+        title: "Automotive Software Development",
         date: "2023 - 2024",
         description:
-            "Especialização em parceria com a Stellantis. Foco em C/C++, Autosar e sistemas embarcados críticos.",
+            "Specialization in partnership with Stellantis. Focus on C/C++, Autosar, and critical embedded systems.",
     },
     {
-        title: "Excelência Operacional e B.I.",
+        title: "Operational Excellence and B.I.",
         date: "2020 - 2022",
         description:
-            "Atuação na indústria com foco em redução de perdas, criação de dashboards e análise de KPIs.",
+            "Industry experience focused on loss reduction, dashboard creation, and KPI analysis.",
     },
     {
-        title: "Pesquisa e Extensão",
+        title: "Research and Extension",
         date: "2017 - 2020",
         description:
-            "Projetos acadêmicos em parceria com empresas privadas para testes de dispositivos eletrônicos.",
+            "Academic projects in partnership with private companies for electronic device testing.",
     },
     {
-        title: "Eletrônica e Robótica",
+        title: "Electronics and Robotics",
         date: "2015 - 2017",
         description:
-            "Início da jornada acadêmica e participação em competições de robótica.",
+            "Beginning of academic journey and participation in robotics competitions.",
     },
 ];
 ---
 
 <Layout
-    title="Sobre Mim - Lucas Sobral"
-    description="Conheça mais sobre Lucas Sobral, Engenheiro e Desenvolvedor."
+    title="About Me - Lucas Sobral"
+    description="Learn more about Lucas Sobral, Engineer and Developer."
     fullWidth={true}
 >
     <main class="about-page">
         <Hero
             title="Lucas Sobral"
-            subtitle="Engenheiro Eletrônico, Mestre em Engenharia de Sistemas e apaixonado por transformar dados em soluções."
+            subtitle="Electronic Engineer, Master in Systems Engineering, and passionate about transforming data into solutions."
             image="/img/eu.png"
         />
 
         <section id="trajectory" class="section-container">
             <div class="section-header">
-                <h2>Minha Trajetória</h2>
-                <p>
-                    Principais marcos da minha carreira profissional e
-                    acadêmica.
-                </p>
+                <h2>My Journey</h2>
+                <p>Key milestones of my professional and academic career.</p>
             </div>
             <Timeline items={timelineItems} />
         </section>
 
         <section id="projects" class="section-container">
             <div class="section-header">
-                <h2>Projetos Favoritos</h2>
-                <p>Alguns dos trabalhos que desenvolvi com carinho.</p>
+                <h2>Favorite Projects</h2>
+                <p>Some of the work I developed with care.</p>
             </div>
 
             <ProjectCard
-                title="Engenharia de Dados com GCP"
+                title="Data Engineering with GCP"
                 subtitle="Google Cloud Platform & Big Data"
-                description="Dashboard no Looker Studio com dados do INMET, tratados com Pandas/Pyspark e Apache Beam na GCP. Um pipeline completo de ponta a ponta."
+                description="Looker Studio dashboard with INMET data, processed with Pandas/PySpark and Apache Beam on GCP. A complete end-to-end pipeline."
                 image="/img/data-eng.png"
             />
 
             <ProjectCard
                 title="Airflow & Spotify API"
-                subtitle="Automação & ETL"
-                description="Automatização da extração diária das top 50 músicas do Spotify utilizando Apache Airflow e armazenamento NoSQL com MongoDB."
+                subtitle="Automation & ETL"
+                description="Automation of daily extraction of Spotify top 50 songs using Apache Airflow and NoSQL storage with MongoDB."
                 image="/img/airflow.png"
                 link="https://github.com/lucasbral/spotify_pipeline"
                 reverse={true}
@@ -86,7 +83,7 @@ const timelineItems = [
             <ProjectCard
                 title="Futscrap"
                 subtitle="Webscraping & Python"
-                description="Script em Python utilizando Selenium e BeautifulSoup para extrair estatísticas detalhadas de jogadores da plataforma Opta Player Stats."
+                description="Python script using Selenium and BeautifulSoup to extract detailed player statistics from Opta Player Stats platform."
                 image="/img/scrap.png"
                 link="https://github.com/lucasbral/fut_scrap"
             />
@@ -94,7 +91,7 @@ const timelineItems = [
             <ProjectCard
                 title="Streamlit & DuckDB"
                 subtitle="High-Performance Data App"
-                description="Aplicação interativa para análise de dados legados (Firebird/Parquet) usando DuckDB e Streamlit, otimizada para hardware de baixo recurso (2 vCPUs)."
+                description="Interactive application for legacy data analysis (Firebird/Parquet) using DuckDB and Streamlit, optimized for low-resource hardware (2 vCPUs)."
                 image="/img/streamlit-duckdb.png"
                 reverse={true}
             />
@@ -102,17 +99,17 @@ const timelineItems = [
             <ProjectCard
                 title="AWS Serverless Pipeline"
                 subtitle="Lambda, DynamoDB & EventBridge"
-                description="Pipeline de dados serverless automatizado para ingestão de dados da API Yu-Gi-Oh! no DynamoDB com agendamento diário via EventBridge."
+                description="Automated serverless data pipeline for Yu-Gi-Oh! API data ingestion into DynamoDB with daily scheduling via EventBridge."
                 image="/img/aws-pipeline.png"
             />
         </section>
 
         <section id="contact" class="section-container contact-section">
             <div class="contact-box">
-                <h2>Vamos Conversar?</h2>
+                <h2>Let's Talk?</h2>
                 <p>
-                    Estou sempre aberto a novas oportunidades e ideias. Entre em
-                    contato!
+                    I'm always open to new opportunities and ideas. Get in
+                    touch!
                 </p>
                 <div class="social-links">
                     <a
