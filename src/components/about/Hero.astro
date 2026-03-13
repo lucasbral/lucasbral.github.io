@@ -21,6 +21,20 @@ const { title, subtitle, image } = Astro.props;
                 <div class="actions">
                     <a href="#contact" class="btn-primary">Let's talk</a>
                     <a href="#projects" class="btn-secondary">View projects</a>
+                    <a
+                        href="https://www.overleaf.com/read/wqmzpbjxstgh#62a6ba"
+                        target="_blank"
+                        class="btn-secondary cv-btn"
+                    >
+                        CV 🇧🇷
+                    </a>
+                    <a
+                        href="https://www.overleaf.com/read/xfwkmtdjhzjn#de8434"
+                        target="_blank"
+                        class="btn-secondary cv-btn"
+                    >
+                        Resume 🇺🇸
+                    </a>
                 </div>
             </div>
         </div>
@@ -155,6 +169,7 @@ const { title, subtitle, image } = Astro.props;
 
     .actions {
         display: flex;
+        flex-wrap: wrap;
         gap: 1rem;
         justify-content: center;
     }
