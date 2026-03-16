@@ -82,19 +82,29 @@ const posts = (await getCollection("blog")).sort(
     /* Left Sidebar */
     .left-sidebar {
         position: sticky;
-        top: 2rem;
-        height: fit-content;
+        top: calc(var(--header-height) + 2rem);
+        height: calc(100vh - var(--header-height) - 2rem);
+        overflow-y: auto;
+        scrollbar-width: none;
         border-right: 1px solid var(--color-border);
         padding-right: 1.5rem;
+    }
+    .left-sidebar::-webkit-scrollbar {
+        display: none;
     }
 
     /* Right Sidebar */
     .right-sidebar-container {
         position: sticky;
-        top: 2rem;
-        height: fit-content;
+        top: calc(var(--header-height) + 2rem);
+        height: calc(100vh - var(--header-height) - 2rem);
+        overflow-y: auto;
+        scrollbar-width: none;
         border-left: 1px solid var(--color-border);
         padding-left: 1.5rem;
+    }
+    .right-sidebar-container::-webkit-scrollbar {
+        display: none;
     }
 
     /* Main Content */
